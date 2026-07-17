@@ -22,13 +22,19 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # التعديل الجذري هنا: سحب أحدث إصدار مستقر من فلاتر
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true
+          # إيقاف الكاش مؤقتاً لنجبر الخادم على مسح الأخطاء القديمة
+          cache: false
 
+      # هذا السطر هو الحل الجذري: تنظيف المشروع وحذف أي ملفات جافا قديمة مخفية
+      - name: Clean Legacy Files & Cache
+        run: |
+          flutter clean
+          rm -rf android/app/src/main/java
+          
       - name: Install dependencies
         run: flutter pub get
 
