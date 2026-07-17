@@ -102,9 +102,9 @@ class _SOSHomePageState extends State<SOSHomePage> {
     try {
       int batteryLevel = await Battery().batteryLevel;
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      String mapsLink = "[https://maps.google.com/?q=$](https://maps.google.com/?q=$){position.latitude},${position.longitude}";
+      String mapsLink = "https://maps.google.com/?q=${position.latitude},${position.longitude}";
 
-      String messageDetails = "حالة طوارئ!\\nالمستخدم: $username بخطر ويحتاج مساعدة فورية!\\nالبطارية: $batteryLevel\%\\nالموقع: $mapsLink";
+      String messageDetails = "حالة طوارئ!\nالمستخدم: $username بخطر ويحتاج مساعدة فورية!\nالبطارية: $batteryLevel%\nالموقع: $mapsLink";
 
       String eventData = jsonEncode({
         "message": messageDetails,
@@ -121,7 +121,7 @@ class _SOSHomePageState extends State<SOSHomePage> {
       String timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
       String queryParams = "auth_key=$pusherKey&auth_timestamp=$timestamp&auth_version=1.0&body_md5=$bodyMd5";
       String path = "/apps/$pusherAppId/events";
-      String stringToSign = "POST\\n$path\\n$queryParams";
+      String stringToSign = "POST\n$path\n$queryParams";
       String signature = Hmac(sha256, utf8.encode(pusherSecret)).convert(utf8.encode(stringToSign)).toString();
 
       String url = "https://api-$pusherCluster.pusher.com$path?$queryParams&auth_signature=$signature";
