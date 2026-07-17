@@ -2,6 +2,7 @@ package com.example.sos
 
 import android.content.Intent
 import android.os.Bundle
+// استيراد مكتبات V2 حصراً
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -42,7 +43,6 @@ class MainActivity: FlutterActivity() {
 
     private fun checkIntentForSOS(intent: Intent) {
         if (intent.getBooleanExtra("trigger_sos", false)) {
-            // مسح الـ Extra حتى لا يتم تفعيله مرة أخرى عند تدوير الشاشة
             intent.removeExtra("trigger_sos")
             methodChannel?.invokeMethod("triggerSOS", null)
         }
