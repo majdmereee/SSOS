@@ -61,5 +61,5 @@ flutter {
 }
 
 dependencies {
-    // Legacy kotlin-stdlib dependency removed to avoid conflicts
+    // تم إزالة السطر الخاص بـ kotlin-stdlib الذي يسبب تضارب لمنع أخطاء بناء التطبيق.
 }
