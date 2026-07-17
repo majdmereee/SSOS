@@ -19,7 +19,7 @@ class MainActivity: FlutterActivity() {
                 val message = call.argument<String>("message")
                 val intent = Intent(this, EmergencyAlertActivity::class.java).apply {
                     putExtra("message", message)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 }
                 startActivity(intent)
                 result.success(null)
@@ -29,9 +29,21 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkIntentForSOS(intent)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        checkIntentForSOS(intent)
+    }
+
+    private fun checkIntentForSOS(intent: Intent) {
         if (intent.getBooleanExtra("trigger_sos", false)) {
+            // مسح الـ Extra حتى لا يتم تفعيله مرة أخرى عند تدوير الشاشة
+            intent.removeExtra("trigger_sos")
             methodChannel?.invokeMethod("triggerSOS", null)
         }
     }
