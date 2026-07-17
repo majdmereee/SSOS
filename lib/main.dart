@@ -39,6 +39,7 @@ class SOSHomePage extends StatefulWidget {
 class _SOSHomePageState extends State<SOSHomePage> {
   static const platform = MethodChannel('com.example.sos/emergency');
 
+  // استبدل هذه القيم ببيانات حسابك في Pusher
   final String pusherAppId = "2176890";
   final String pusherKey = "163dad2d478fe38aa1cf";
   final String pusherSecret = "81ae586cffe7bf12c117";
@@ -79,24 +80,36 @@ class _SOSHomePageState extends State<SOSHomePage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', name.trim());
     setState(() => username = name.trim());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم حفظ الاسم بنجاح!')),
+    );
   }
 
   Future<void> _checkPermissions() async {
     bool granted = await FlutterAccessibilityService.isAccessibilityPermissionEnabled();
-    bool locationGranted = await Geolocator.checkPermission() == LocationPermission.always || await Geolocator.checkPermission() == LocationPermission.whileInUse;
-    if (!locationGranted) {
+    
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       await Geolocator.requestPermission();
     }
+    
     setState(() => isAccessibilityGranted = granted);
   }
 
   Future<void> _requestPermission() async {
     await FlutterAccessibilityService.requestAccessibilityPermission();
-    _checkPermissions();
+    // ننتظر قليلاً ريثما يعود المستخدم من الإعدادات
+    Future.delayed(const Duration(seconds: 2), _checkPermissions);
   }
 
   Future<void> _sendSOS() async {
-    if (username.isEmpty) return;
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('الرجاء حفظ اسم المستخدم أولاً')),
+      );
+      return;
+    }
+    
     setState(() { isAlarmTriggered = true; });
 
     try {
@@ -126,17 +139,23 @@ class _SOSHomePageState extends State<SOSHomePage> {
 
       String url = "https://api-$pusherCluster.pusher.com$path?$queryParams&auth_signature=$signature";
 
-      await http.post(
+      var response = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
         body: body,
       );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إرسال نداء الاستغاثة بنجاح!'), backgroundColor: Colors.green),
+        );
+      }
     } catch (e) {
-      print("خطأ: $e");
+      print("خطأ في الإرسال: $e");
     }
 
     Future.delayed(const Duration(seconds: 5), () {
-      setState(() { isAlarmTriggered = false; });
+      if (mounted) setState(() { isAlarmTriggered = false; });
     });
   }
 
@@ -150,12 +169,15 @@ class _SOSHomePageState extends State<SOSHomePage> {
       );
       await pusher.subscribe(channelName: "sos-channel");
       await pusher.connect();
-    } catch (e) {}
+    } catch (e) {
+      print("Pusher Error: $e");
+    }
   }
 
   void _onPusherEvent(PusherEvent event) {
     if (event.eventName == "sos-alert") {
       final data = jsonDecode(event.data.toString());
+      // إذا كان المرسل شخصاً آخر، قم بتشغيل شاشة الإنذار
       if (data['sender'] != username) {
         platform.invokeMethod('showEmergencyScreen', {"message": data['message']});
       }
@@ -165,33 +187,67 @@ class _SOSHomePageState extends State<SOSHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Instant SOS'), backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+      appBar: AppBar(
+        title: const Text('Instant SOS', style: TextStyle(fontWeight: FontWeight.bold)), 
+        backgroundColor: Colors.redAccent, 
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Icon(Icons.emergency, size: 80, color: Colors.redAccent),
+            const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'اسم المستخدم',
                 border: const OutlineInputBorder(),
-                suffixIcon: IconButton(icon: const Icon(Icons.save), onPressed: () => _saveUsername(_nameController.text)),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.save, color: Colors.redAccent), 
+                  onPressed: () => _saveUsername(_nameController.text)
+                ),
               ),
             ),
             const SizedBox(height: 30),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.all(20)),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, 
+                foregroundColor: Colors.white, 
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+              ),
               onPressed: _sendSOS,
-              child: const Text('اختبار إرسال استغاثة', style: TextStyle(fontSize: 20)),
+              icon: const Icon(Icons.warning_amber_rounded, size: 28),
+              label: const Text('اختبار إرسال استغاثة', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 20),
             if (!isAccessibilityGranted)
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                icon: const Icon(Icons.settings),
-                label: const Text('تفعيل صلاحية الأزرار'),
-                onPressed: _requestPermission,
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  border: Border.all(color: Colors.orange),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'لكي يعمل التطبيق والموبايل مغلق، يجب تفعيل خدمة الوصول (Accessibility) من إعدادات جهازك.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                      icon: const Icon(Icons.settings),
+                      label: const Text('تفعيل الصلاحية الآن'),
+                      onPressed: _requestPermission,
+                    ),
+                  ],
+                ),
               ),
           ],
         ),
