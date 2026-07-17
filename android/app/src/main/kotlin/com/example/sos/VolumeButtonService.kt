@@ -11,10 +11,12 @@ class VolumeButtonService : AccessibilityService() {
     private var clickCount = 0
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        // نتحقق من ضغط زر رفع الصوت للأسفل
         if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP && event.action == KeyEvent.ACTION_DOWN) {
             val currentTime = System.currentTimeMillis()
             
-            if (currentTime - lastClickTime > 2000) {
+            // إذا مر أكثر من 1.5 ثانية منذ آخر ضغطة، نصفر العداد
+            if (currentTime - lastClickTime > 1500) {
                 clickCount = 0
             }
             
@@ -31,7 +33,7 @@ class VolumeButtonService : AccessibilityService() {
 
     private fun triggerEmergency() {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("trigger_sos", true)
         }
         startActivity(intent)
