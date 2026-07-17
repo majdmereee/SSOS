@@ -1,13 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.sos">
 
+    <!-- الصلاحيات المطلوبة -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- صلاحيات الموقع -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <!-- صلاحيات الشاشة والمنبه لتخطي القفل والصمت -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
         android:label="Instant SOS"
@@ -34,13 +42,16 @@
             </intent-filter>
         </activity>
 
+        <!-- تسجيل شاشة الإنذار الإجبارية لتخطي القفل -->
         <activity 
             android:name=".EmergencyAlertActivity"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
+            android:showOnLockScreen="true"
             android:exported="false"
             android:theme="@style/LaunchTheme" />
 
+        <!-- تسجيل خدمة مراقبة أزرار الصوت -->
         <service android:name=".VolumeButtonService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
