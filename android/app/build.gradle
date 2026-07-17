@@ -61,5 +61,5 @@ flutter {
 }
 
 dependencies {
-    // تم إزالة السطر الخاص بـ kotlin-stdlib الذي يسبب تضارب لمنع أخطاء بناء التطبيق.
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
