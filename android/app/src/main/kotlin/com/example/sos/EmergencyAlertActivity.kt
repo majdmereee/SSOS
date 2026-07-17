@@ -47,7 +47,7 @@ class EmergencyAlertActivity : AppCompatActivity() {
         val message = intent.getStringExtra("message") ?: "شخص ما في خطر!"
 
         val textView = TextView(this).apply {
-            text = "🚨 نداء استغاثة 🚨\\n\\n$message"
+            text = "🚨 نداء استغاثة 🚨\n\n$message"
             textSize = 20f
             setTextColor(android.graphics.Color.WHITE)
             gravity = android.view.Gravity.CENTER
